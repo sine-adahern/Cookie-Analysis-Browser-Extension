@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cookie Guard Reporter - Options</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <main>
+    <h1>Cookie Guard Reporter - Options</h1>
+    <section>
+      <h2>Current settings</h2>
+      <pre id="settingsDump"></pre>
+    </section>
+    <section>
+      <h2>Analyzer diagnostics</h2>
+      <pre id="analyzerDump"></pre>
+    </section>
+    <section>
+      <h2>Notes</h2>
+      <ul>
+        <li>"Inferred data categories" are heuristics from cookie names/values.</li>
+        <li>Blocked attempts rely on DNR debug events and are best in unpacked developer mode.</li>
+        <li>The analyzer runs locally and does not send cookie values to external services.</li>
+      </ul>
+    </section>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>

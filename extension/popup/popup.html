@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cookie Guard Reporter</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>Cookie Guard Reporter</h1>
+
+    <section class="panel">
+      <label for="mode"><strong>Blocking Mode</strong></label>
+      <select id="mode">
+        <option value="off">Off</option>
+        <option value="thirdParty">Block third-party cookies</option>
+        <option value="all">Block all cookies</option>
+      </select>
+      <p id="modeHint"></p>
+    </section>
+
+    <section class="panel">
+      <h2>Site</h2>
+      <p id="hostValue">-</p>
+      <button id="toggleSiteAllow">Toggle site allowlist</button>
+    </section>
+
+    <section class="panel">
+      <h2>Summary</h2>
+      <div class="grid">
+        <div><span>Current cookies</span><strong id="cookieCount">0</strong></div>
+        <div><span>Cookie changes</span><strong id="changeCount">0</strong></div>
+        <div><span>Blocked attempts</span><strong id="blockedCount">0</strong></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Add allowlist domain</h2>
+      <div class="row">
+        <input id="allowDomain" placeholder="example.com" />
+        <button id="addAllowDomain">Add</button>
+      </div>
+      <p id="allowListText"></p>
+    </section>
+
+    <section class="panel">
+      <h2>Cookies</h2>
+      <div id="cookieTable" class="table"></div>
+      <p class="small">Click any cookie row to view a plain-language explanation and exact captured value.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Cookie Details</h2>
+      <div id="cookieDetail" class="detail-card small">Select a cookie above to see details.</div>
+    </section>
+
+    <section class="panel">
+      <h2>Recent Events</h2>
+      <div id="eventList" class="events"></div>
+    </section>
+
+    <section class="panel row buttons">
+      <button id="refresh">Refresh</button>
+      <button id="clearLog">Clear log</button>
+      <button id="openOptions">Options</button>
+    </section>
+  </main>
+
+  <script src="popup.js"></script>
+</body>
+</html>

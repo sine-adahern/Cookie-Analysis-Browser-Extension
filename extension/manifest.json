@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Cookie Guard Reporter",
+  "description": "Monitors cookie activity, blocks cookie traffic, and reports cookie-related signals.",
+  "version": "0.1.0",
+  "permissions": [
+    "cookies",
+    "storage",
+    "tabs",
+    "declarativeNetRequest",
+    "declarativeNetRequestFeedback"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Cookie Guard Reporter",
+    "default_popup": "popup/popup.html"
+  },
+  "options_page": "options/options.html"
+}

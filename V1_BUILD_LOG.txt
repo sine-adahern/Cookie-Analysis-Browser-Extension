@@ -1,0 +1,265 @@
+Cookie Guard Reporter - V1 Build Log
+===================================
+
+Stage 1 - Project scaffold
+What this is:
+- A brand new browser extension workspace under `extension/` with popup and options UI folders.
+
+What it does:
+- Creates the physical file and folder structure needed for a Manifest V3 extension.
+
+How it does it:
+- Uses PowerShell `New-Item` commands to create directories:
+  - `extension/`
+  - `extension/popup/`
+  - `extension/options/`
+
+Stage 2 - Manifest definition (`extension/manifest.json`)
+What this is:
+- The extension manifest that defines identity, runtime model, required permissions, and UI entry points.
+
+What it does:
+- Registers Manifest V3.
+- Registers a service worker (`background.js`).
+- Sets popup UI (`popup/popup.html`).
+- Sets options page (`options/options.html`).
+- Requests permissions:
+  - `cookies`: read cookie store and change events.
+  - `storage`: persist settings and logs.
+  - `tabs`: query active tab URL for per-site reporting.
+  - `declarativeNetRequest`: apply block rules.
+  - `declarativeNetRequestFeedback`: listen for rule match debug events (for blocked-attempt reporting).
+- Requests `<all_urls>` host access so cookie/reporting logic works on browsed sites.
+
+How it does it:
+- Standard MV3 JSON declaration with Chrome extension keys.
+
+Stage 3 - Core engine (`extension/background.js`)
+What this is:
+- Service worker logic for settings, rule management, event logging, and popup messaging.
+
+What it does:
+- Defines defaults:
+  - `blockMode`: `thirdParty`.
+  - `allowlist`: empty.
+- Persists and retrieves settings/logs from `chrome.storage.local`.
+- Applies DNR dynamic rules for 3 modes:
+  - `off`: no blocking rules.
+  - `thirdParty`: removes `Cookie` request headers and `Set-Cookie` response headers for third-party traffic.
+  - `all`: removes those headers for all matching traffic.
+- Excludes allowlisted domains from blocking (`excludedRequestDomains`).
+- Logs cookie changes with:
+  - Name, domain, path, flags, change cause, timestamp.
+- Logs blocked attempts using `onRuleMatchedDebug` with:
+  - Rule ID, URL, method, resource type, timestamp.
+- Infers possible data category intent by pattern matching names/values:
+  - location, ip, time, session, tracking, preferences.
+- Exposes message API for popup/options:
+  - `getSettings`
+  - `setSettings`
+  - `clearLog`
+  - `getReportForTab`
+
+How it does it:
+- Uses Chrome extension APIs:
+  - `chrome.declarativeNetRequest.updateDynamicRules`
+  - `chrome.cookies.onChanged`
+  - `chrome.declarativeNetRequest.onRuleMatchedDebug`
+  - `chrome.runtime.onMessage`
+- Uses log cap (`MAX_LOG_ENTRIES=2000`) to bound storage growth.
+
+Stage 4 - Popup UI (`extension/popup/*`)
+What this is:
+- Primary operator interface shown when extension icon is clicked.
+
+What it does:
+- Lets you switch blocking mode (`off`, `thirdParty`, `all`).
+- Shows current site host.
+- Lets you add/remove current site from allowlist.
+- Lets you add arbitrary domain to allowlist.
+- Shows summary counts for active site:
+  - current cookies
+  - cookie change events
+  - blocked attempts
+- Lists current site cookies and inferred categories.
+- Lists recent site events (cookie changes and rule blocks).
+- Supports refresh, clear log, and open options actions.
+
+How it does it:
+- `popup.js` queries active tab via `chrome.tabs.query`.
+- Sends messages to background for data/settings.
+- Renders DOM fragments for cookies/events and updates controls.
+- `popup.css` styles compact extension UI layout.
+
+Stage 5 - Options page (`extension/options/*`)
+What this is:
+- Basic diagnostics/settings visibility page.
+
+What it does:
+- Displays current settings JSON.
+- Shows critical product limitations note.
+
+How it does it:
+- `options.js` calls `getSettings` message and writes JSON to `<pre>`.
+
+Stage 6 - Product limitations and behavior model
+What this is:
+- Known technical constraints you need to understand while testing.
+
+What it does:
+- Clarifies interpretation boundaries:
+  - Cookie "wanted data" is inferred, not guaranteed truth.
+  - Blocked attempt logs rely on DNR debug events (best in unpacked dev mode).
+
+How it does it:
+- Enforces a heuristic model in code and documents this in UI/options.
+
+Usage Guide - Load and run V1
+=============================
+
+1) Load extension unpacked
+- Open Chrome and go to `chrome://extensions`.
+- Enable "Developer mode".
+- Click "Load unpacked".
+- Select folder: `c:\Users\sinea\MyRepos\AIFI\extension`.
+
+2) Open popup
+- Click extension icon.
+- Pin "Cookie Guard Reporter" for easier access.
+
+3) Choose blocking mode
+- In popup "Blocking Mode":
+  - `Off`: monitor only.
+  - `Block third-party cookies`: recommended start.
+  - `Block all cookies`: strict mode; can break logins.
+
+4) Browse any `http`/`https` site and refresh popup
+- Summary values update for active site.
+- "Cookies" section lists currently visible cookies.
+- "Recent Events" shows cookie changes and blocked traffic.
+
+5) Use allowlist for broken sites
+- Click "Add site to allowlist" for current host.
+- Or add domain manually in allowlist input.
+- Allowlisted domains are excluded from header removal rules.
+
+6) Clear logs when needed
+- Click "Clear log" in popup.
+
+7) Open options page
+- Click "Options" in popup to inspect raw settings JSON and notes.
+
+Validation Checklist
+====================
+- Switching mode changes behavior immediately.
+- Third-party mode should reduce tracker cookie traffic.
+- All mode should aggressively block cookie headers.
+- Allowlist should restore cookie behavior for specified domains.
+- Sites may require reload after mode change.
+
+Next-stage ideas (not yet implemented)
+======================================
+- Export report as JSON/CSV.
+- Separate counters for request-header blocks vs response-header blocks.
+- Improved first-party/third-party classification by eTLD+1 comparison.
+- Session timeline view with per-tab grouping.
+- Optional per-site mode overrides.
+
+Stage 7 - Safety patch for non-web tabs
+What this is:
+- A popup interaction safety fix in `extension/popup/popup.js`.
+
+What it does:
+- Prevents errors when clicking "Toggle site allowlist" while active tab is not a web URL (for example `chrome://extensions`).
+
+How it does it:
+- Adds a URL scheme guard so handler exits unless tab URL matches `http` or `https`.
+
+Stage 8 - Clickable cookie details with non-technical explanation
+What this is:
+- A new popup feature that lets the user click any cookie row and inspect a clearly formatted explanation plus the exact captured cookie content.
+
+What it does:
+- Makes each cookie row clickable.
+- Adds a dedicated `Cookie Details` panel in popup UI.
+- Shows exact cookie values and metadata:
+  - Name
+  - Value
+  - Domain
+  - Path
+  - Expiry
+  - HostOnly
+  - StoreId
+- Adds plain-language explanation for non-technical users:
+  - likely purpose
+  - inferred information categories
+  - security/behavior notes (Secure, HttpOnly, SameSite)
+
+How it does it:
+- `extension/background.js` now includes `value`, `hostOnly`, and `storeId` in cookie rows returned to popup.
+- `extension/background.js` now includes `value` in cookie change log entries.
+- `extension/popup/popup.html` now includes a `Cookie Details` section.
+- `extension/popup/popup.css` adds visual styling for clickable rows, selected row state, and detail card formatting.
+- `extension/popup/popup.js`:
+  - tracks selected cookie row
+  - renders detail panel content when clicked
+  - generates a human-readable summary from inferred categories and cookie flags
+  - escapes all dynamic text before inserting into HTML to prevent popup script injection from cookie values.
+
+Stage 9 - Full intelligent cookie analysis system
+What this is:
+- A modular offline analysis pipeline integrated into the extension to decode values, classify purpose, extract data signals, and explain privacy impact.
+
+What it does:
+- Adds automatic decoding support for:
+  - URL encoding
+  - Base64/base64url
+  - Hex
+  - JWT
+  - JSON
+  - binary payload detection with probable Protocol Buffers hint
+- Handles nested encoding with multi-step decode loops.
+- Extracts meaningful signals:
+  - user/device IDs
+  - timestamps
+  - timezone/country indicators
+  - A/B test assignments
+  - language/theme preferences
+  - analytics/tracking ID formats
+- Classifies cookies into:
+  - functional
+  - analytics
+  - advertising
+  - social
+  - performance
+  - unknown
+- Computes:
+  - privacy risk (low/medium/high)
+  - third-party access status
+  - lifespan summary
+  - suspicious flags
+  - confidence estimate
+- Builds a local knowledge base for common cookies and pattern rules.
+- Generates plain-language explanation and recommendation text for non-technical users.
+- Integrates analyzer output into popup list/details and options diagnostics.
+
+How it does it:
+- Added new modules:
+  - `extension/analysis/knowledge-base.js`
+  - `extension/analysis/decoder.js`
+  - `extension/analysis/classifier.js`
+  - `extension/analysis/explainer.js`
+- `extension/background.js` now:
+  - loads analysis modules with `importScripts(...)`
+  - analyzes every cookie in `getReportForTab`
+  - enriches cookie-change events with category/risk
+  - exposes `getAnalyzerStats` runtime message
+- `extension/popup/popup.js` now:
+  - shows category/risk/purpose in cookie list
+  - displays explanation, decoded preview, decode chain, suspicious flags, and recommendations in details panel
+- `extension/popup/popup.css` now:
+  - styles risk badges and decoded output blocks
+- `extension/options/options.html` and `extension/options/options.js` now:
+  - display analyzer diagnostics and supported capabilities
+- Added full architecture and usage documentation in:
+  - `COOKIE_ANALYSIS_GUIDE.txt`

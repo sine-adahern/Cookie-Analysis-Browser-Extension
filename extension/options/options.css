@@ -1,0 +1,27 @@
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+  background: #f4f7ff;
+  color: #1a2d4d;
+}
+
+main {
+  max-width: 760px;
+  margin: 24px auto;
+  padding: 0 16px;
+}
+
+section {
+  background: #fff;
+  border: 1px solid #d4deee;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+pre {
+  background: #eef4ff;
+  border-radius: 6px;
+  padding: 10px;
+  overflow: auto;
+}
